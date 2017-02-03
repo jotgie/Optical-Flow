@@ -3,6 +3,7 @@
 #include "mMinWindow.h"
 #include "BGS.h"
 #include <vector>
+
 using namespace std;
 using namespace cv;
 
