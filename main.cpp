@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "mMinWindow.h"
 #include "BGS.h"
-#include <vector> 
+#include <vector>
 using namespace std;
 using namespace cv;
 
@@ -34,7 +34,7 @@ int main(void)
 		cout << "Cannot open the video file" << endl;
 		return -1;
 	}
-	
+
 	cap >> frame;
 
     win1 = cv::Rect(400, 200, 300, frame.rows - 200); //x,y,width, height
@@ -52,7 +52,7 @@ int main(void)
 			fprintf(stderr, "End of video");
 			return -1;
 		}
-		
+
 		mFrame0 = mMinFrame0.drawVectors(frame);
 		result1 = bgsFrame0.drawSquare(frame, mMinFrame0.getResultVector());
         mFrame1 = result1[0];
@@ -69,7 +69,7 @@ int main(void)
         // bez tego nic się nie wyswietla
         int key_pressed = waitKey(1);
         if (key_pressed == 'q') break;
-			
+
 	}
 
 	return 0;
