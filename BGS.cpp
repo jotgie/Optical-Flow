@@ -172,8 +172,8 @@ BGS::BGS(Rect rRectArg, int history, float varThreshold, int iDetectLineX1, int 
     pMOG2->setNMixtures(5);
 //    pMOG2->setShadowThreshold(127);
     pMOG2->setVarMin(200);
-    pMOG2->setVarThresholdGen(10.1);
-    se1 = getStructuringElement(MORPH_RECT, Point(5, 5));
+    pMOG2->setVarThresholdGen(0.1);
+    se1 = getStructuringElement(MORPH_RECT, Point(15, 15));
     se2 = getStructuringElement(MORPH_RECT, Point(2, 2));
     mMaskG = getStructuringElement(MORPH_RECT, Point(5, 5));
 
@@ -198,7 +198,7 @@ void BGS::Refactor(Mat &mArg)
 }
 
 //rysowanie kwadratów wokół samochodów
-cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg, std::vector<pair<cv::Point2f, cv::Point2f>> const& vp_p2fArgument)
+cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
 {
     std::vector<int> vehicle_ids;
     cv::Mat tempmat;
@@ -206,22 +206,187 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg, std::vector<pair<cv::Poi
     std::vector<std::vector<cv::Point>> vvpContours;
     mColorFrameArg(rRect).copyTo(mColorFrame);
     mColorFrameArg(rRect).copyTo(mColorFrame1);
+
+    cv::Mat out_hsv;
+    cvtColor(mColorFrame,out_hsv,CV_RGB2HSV);
+    std::vector<Mat> channels(3);
+    // split img:
+    split(out_hsv, channels);
+    cv::Mat s(out_hsv.rows, out_hsv.cols, CV_8UC1 );
+    s.setTo(120);
+    cv::Mat v(out_hsv.rows, out_hsv.cols, CV_8UC1 );
+    v.setTo(255);
+    cv::Mat h(out_hsv.rows, out_hsv.cols, CV_8UC1 );
+    h.setTo(75);
+    cv::Mat in_hvs[] = { h, s, channels[2]};
+    cv::merge(in_hvs, 3, out_hsv);
+    cvtColor(out_hsv,mColorFrame,CV_HSV2RGB);
+    imshow("RGB", mColorFrame);
+
+
     pMOG2->apply(mColorFrame, mMask, 0.001);
     cv::inRange(mMask, 200, 255, mMask);
     imshow("draw square img", mMask);
     Refactor(mMask);
-    ret[0] = mMask;
+    Mat bitwise_res;
+    cv::Mat out;
+    cv::Mat in[] = {mMask, mMask, mMask};
+    cv::merge(in, 3, out);
+//    std::cout << "mMask. rows:" << out.rows << " cols: " << out.cols << " channels" << out.channels() << std::endl;
+//    std::cout << "mColorFrame. rows:" << mColorFrame.rows << " cols: " << mColorFrame.cols << " channels" << mColorFrame.channels() << std::endl;
+    cv::bitwise_and(out,mColorFrame,bitwise_res);
+    imshow("AND",bitwise_res);
+//    cv::Mat out_hsv;
+//    cvtColor(mColorFrame,out_hsv,CV_RGB2HSV);
+//    std::vector<Mat> channels(3);
+//    // split img:
+//    split(out_hsv, channels);
+//    cv::Mat s(out_hsv.rows, out_hsv.cols, CV_8UC1 );
+//    s.setTo(120);
+//    cv::Mat v(out_hsv.rows, out_hsv.cols, CV_8UC1 );
+//    v.setTo(255);
+//    cv::Mat h(out_hsv.rows, out_hsv.cols, CV_8UC1 );
+//    h.setTo(75);
+//    cv::Mat in_hvs[] = { h, s, channels[2]};
+//    cv::merge(in_hvs, 3, out_hsv);
+//    cvtColor(out_hsv,out,CV_HSV2RGB);
+//    imshow("RGB", out);
+
+//    cv::Mat channels[] = { h, v, s };
+//    int from_to[] = {0,2, 1,4, 2,6 };
+
+//    cv::mixChannels( &out_hsv, 1, channels, 3, from_to, 3);
+//    imshow("h", channels[0]);
+//    imshow("s", channels[1]);
+//    imshow("v", channels[2]);
+    //RGB FUN
+//    cv::Mat red = cv::Mat::zeros(bitwise_res.rows, bitwise_res.cols, CV_8UC3 );
+//    cv::Mat green = cv::Mat::zeros(bitwise_res.rows, bitwise_res.cols, CV_8UC3 );
+//    cv::Mat blue = cv::Mat::zeros(bitwise_res.rows, bitwise_res.cols, CV_8UC3 );
+
+//    cv::Mat channels[] = { red, green, blue };
+//    int from_to[] = {0,2, 1,4, 2,6 };
+
+//    cv::mixChannels( &bitwise_res, 1, channels, 3, from_to, 3);
+//    imshow("red", channels[0]);
+//    imshow("blue", channels[1]);
+//    imshow("green", channels[2]);
 
 
 
     //znajduje kontury samochodów widoczne na Optical Flow1 i zapisuje je do vvpContours jako wektory punktów
     //hierarchy to arraja wyjściowa ale nigdy nie używana
     // do przebadania: CV_RETR_XXX, CHAIN_APPROX_XXX
+//    findContours(*(new Mat(channels[2])) , vvpContours, hierarchy, CV_RETR_TREE, CHAIN_APPROX_SIMPLE);
+//    dilate(channels[2], channels[2], getStructuringElement(MORPH_RECT, Point(3, 3)));
     findContours(*(new Mat(mMask)) , vvpContours, hierarchy, CV_RETR_TREE, CHAIN_APPROX_SIMPLE);
+//    dilate(mMask, mMask, getStructuringElement(MORPH_CROSS, Point(3, 3)));
     // ta zielona linia na opt flow
     line(mColorFrame, p_pLine.first, p_pLine.second, Scalar(0, 255, 0), 5, CV_AA, 0);
+    ret[0] = mMask; //channels[2];
+//    imshow("CH2", channels[2]);
+//    imshow("mMask", mMask);
+
     //dla wszystkich kanturów pojazdów
-    for (auto itc = vvpContours.begin(); itc != vvpContours.end(); ++itc)
+    //ta cześć ma za zadanie na podstawie wartości pikseli stwierdzić czy w okrysie znajdują się dwa pojazdy i rozdziielić odpowiedno obrys
+    std::vector<std::vector<cv::Point>> newContours;
+    std::vector<bool> isMoreThanOneCar;
+    int iii = 2;
+    for (auto sigleContureVectorIt = vvpContours.begin(); sigleContureVectorIt != vvpContours.end() && iii != 0; ++sigleContureVectorIt)
+    {
+        std::cout << "here" << std::endl;
+        auto pts = sigleContureVectorIt;
+        //biore najbardziej skrajne punkty każdego konturu
+        Point extLeft  = *min_element(pts->begin(), pts->end(),
+                              [](const Point& lhs, const Point& rhs) {
+                                  return lhs.x < rhs.x;
+                          });
+        Point extRight = *max_element(pts->begin(), pts->end(),
+                              [](const Point& lhs, const Point& rhs) {
+                                  return lhs.x < rhs.x;
+                          });
+        Point extTop   = *min_element(pts->begin(), pts->end(),
+                              [](const Point& lhs, const Point& rhs) {
+                                  return lhs.y < rhs.y;
+                          });
+        Point extBot   = *max_element(pts->begin(), pts->end(),
+                              [](const Point& lhs, const Point& rhs) {
+                                  return lhs.y < rhs.y;
+                          });
+
+        using Length = int; //ilość nieczarnych piskelihue
+        using AvColor = double; //średnie value colorów w pasku
+        int pixelVariation = 12;
+        std::vector<AvColor> verticalAverage;
+        std::vector<std::pair<int,Length>> verticalNonBlack; //fist in position second in number of non black pixels
+        //srednie wartosci w pionowych paskach
+        for ( auto x = extLeft.x; x != extRight.x; ++x)
+        {
+            Length l = 0;
+            AvColor ac = 0;
+//            std::cout << "bottom: " << extBot.y << ", top: " <<  extTop.y << std::endl;
+            for ( auto y = extTop.y; y != extBot.y; ++y)
+            {
+//                std::cout << "x: " << x << ", y: " << y << std::endl;
+                auto pix = channels[2].at<char>(x,y);
+                ac+=int(pix);
+                if (pix != 0) l++;
+            }
+            verticalAverage.push_back(ac/(double)(extRight.x-extLeft.x));
+            if (verticalNonBlack.empty())
+            {
+                verticalNonBlack.push_back(std::pair<int,Length>(x,l));
+            } else if (l+pixelVariation < verticalNonBlack.back().second || l-pixelVariation > verticalNonBlack.back().second) {
+                verticalNonBlack.push_back(std::pair<int,Length>(x,l));
+            }
+        }
+//        //srednie wartości w poziomych paskach
+        std::vector<AvColor> horizontalAverage;
+        std::vector<std::pair<int,Length>> horizontalNonBlack; //first is position second in number of non black pixels
+        for ( auto y = extTop.y; y != extBot.y; ++y)
+        {
+            Length l = 0;
+            AvColor ac = 0;
+            for ( auto x = extLeft.x; x != extRight.x; ++x)
+            {
+                auto pix = channels[2].at<char>(x,y);
+                ac+=pix;
+                if (pix != 0) l++;
+            }
+            horizontalAverage.push_back(ac/(double)(extBot.y-extTop.y));
+            if (horizontalNonBlack.empty())
+            {
+                horizontalNonBlack.push_back(std::pair<int,Length>(y,l));
+            } else if (l+pixelVariation < horizontalNonBlack.back().second && l-pixelVariation > horizontalNonBlack.back().second) {
+                horizontalNonBlack.push_back(std::pair<int,Length>(y,l));
+            }
+        }
+        std::cout << "verticalNonBlack lenght: " << verticalNonBlack.size() << std::endl;
+        std::cout << "horizontalNonBlack lenght: " << horizontalNonBlack.size() << std::endl;
+
+
+        if (verticalNonBlack.size() <= 1 && horizontalNonBlack.size() <= 1)
+        {
+            //only one car in blob. We can continue to next contour
+            newContours.push_back(*sigleContureVectorIt);
+            isMoreThanOneCar.push_back(false);
+        }
+        else
+        {
+            newContours.push_back(*sigleContureVectorIt);
+            isMoreThanOneCar.push_back(true);
+            //więcej niż jeden pojazd. Trzeba podzielić kontur na dwa
+            //1. Samochodów jest tyle ile wynosi długość wetora nieczarnych
+            //2. Dla obszarów przejściowych znajduje my 2 (samochy obok siebie lub bezpośrednoi za sobą)
+            //   lub 4 (samochody przsunięte względem siebie) i szuakmy 2 najbliżyzch punktów konturów
+            //3. rozdzielamy wektor konturów na tych dwóch punktach i towtrzymy dwa nowe zestawy konturów
+        }
+    }
+
+
+    //dla wszystkich kanturów pojazdów
+    int i=0;
+    for (auto itc = vvpContours.begin(); itc != vvpContours.end(); ++itc, ++i)
     {
         cv::Scalar redColor(0, 0, 255);
 

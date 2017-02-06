@@ -58,7 +58,7 @@ else cap.open("file://" + path + "/Braniewo1.mp4");
     win1 = cv::Rect(0, 0, frame.cols, frame.rows); //x,y,width, height
 	mMinWindow mMinFrame0 = mMinWindow(win1, winSize, subPixWinSize, termcrit);
     //Do zbadania: 2 i 3 argument (history, varThreshold)
-    BGS bgsFrame0 = BGS(win1, 300, 60, 200, 260, 300);
+    BGS bgsFrame0 = BGS(win1, 300, 20, 0, win1.width, 200);
 
 	while (true)
 	{
@@ -71,8 +71,8 @@ else cap.open("file://" + path + "/Braniewo1.mp4");
 			return -1;
 		}
 
-		mFrame0 = mMinFrame0.drawVectors(frame);
-		result1 = bgsFrame0.drawSquare(frame, mMinFrame0.getResultVector());
+        mFrame0 = mMinFrame0.drawVectors(frame);
+        result1 = bgsFrame0.drawSquare(frame);
         mFrame1 = result1[0];
         mFrame2 = result1[1];
 
@@ -101,6 +101,5 @@ else cap.open("file://" + path + "/Braniewo1.mp4");
             }
         }
 	}
-
 	return 0;
 }

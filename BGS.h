@@ -27,7 +27,7 @@ public:
 private:
 	void Refactor(cv::Mat &mArg);
 public:
-    cv::Mat* drawSquare(cv::Mat const& mColorFrameArg, std::vector<std::pair<cv::Point2f, cv::Point2f>> const&);
+    cv::Mat* drawSquare(cv::Mat const& mColorFrameArg);
     void printVehicleInfo(cv::Point3d coeffs);
 };
 
