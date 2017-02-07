@@ -236,59 +236,19 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
 //    std::cout << "mColorFrame. rows:" << mColorFrame.rows << " cols: " << mColorFrame.cols << " channels" << mColorFrame.channels() << std::endl;
     cv::bitwise_and(out,mColorFrame,bitwise_res);
     imshow("AND",bitwise_res);
-//    cv::Mat out_hsv;
-//    cvtColor(mColorFrame,out_hsv,CV_RGB2HSV);
-//    std::vector<Mat> channels(3);
-//    // split img:
-//    split(out_hsv, channels);
-//    cv::Mat s(out_hsv.rows, out_hsv.cols, CV_8UC1 );
-//    s.setTo(120);
-//    cv::Mat v(out_hsv.rows, out_hsv.cols, CV_8UC1 );
-//    v.setTo(255);
-//    cv::Mat h(out_hsv.rows, out_hsv.cols, CV_8UC1 );
-//    h.setTo(75);
-//    cv::Mat in_hvs[] = { h, s, channels[2]};
-//    cv::merge(in_hvs, 3, out_hsv);
-//    cvtColor(out_hsv,out,CV_HSV2RGB);
-//    imshow("RGB", out);
-
-//    cv::Mat channels[] = { h, v, s };
-//    int from_to[] = {0,2, 1,4, 2,6 };
-
-//    cv::mixChannels( &out_hsv, 1, channels, 3, from_to, 3);
-//    imshow("h", channels[0]);
-//    imshow("s", channels[1]);
-//    imshow("v", channels[2]);
-    //RGB FUN
-//    cv::Mat red = cv::Mat::zeros(bitwise_res.rows, bitwise_res.cols, CV_8UC3 );
-//    cv::Mat green = cv::Mat::zeros(bitwise_res.rows, bitwise_res.cols, CV_8UC3 );
-//    cv::Mat blue = cv::Mat::zeros(bitwise_res.rows, bitwise_res.cols, CV_8UC3 );
-
-//    cv::Mat channels[] = { red, green, blue };
-//    int from_to[] = {0,2, 1,4, 2,6 };
-
-//    cv::mixChannels( &bitwise_res, 1, channels, 3, from_to, 3);
-//    imshow("red", channels[0]);
-//    imshow("blue", channels[1]);
-//    imshow("green", channels[2]);
 
 
 
     //znajduje kontury samochodów widoczne na Optical Flow1 i zapisuje je do vvpContours jako wektory punktów
     //hierarchy to arraja wyjściowa ale nigdy nie używana
     // do przebadania: CV_RETR_XXX, CHAIN_APPROX_XXX
-//    findContours(*(new Mat(channels[2])) , vvpContours, hierarchy, CV_RETR_TREE, CHAIN_APPROX_SIMPLE);
-//    dilate(channels[2], channels[2], getStructuringElement(MORPH_RECT, Point(3, 3)));
     findContours(*(new Mat(mMask)) , vvpContours, hierarchy, CV_RETR_TREE, CHAIN_APPROX_SIMPLE);
-//    dilate(mMask, mMask, getStructuringElement(MORPH_CROSS, Point(3, 3)));
     // ta zielona linia na opt flow
     line(mColorFrame, p_pLine.first, p_pLine.second, Scalar(0, 255, 0), 5, CV_AA, 0);
     ret[0] = mMask; //channels[2];
-//    imshow("CH2", channels[2]);
-//    imshow("mMask", mMask);
 
     //dla wszystkich kanturów pojazdów
-    //ta cześć ma za zadanie na podstawie wartości pikseli stwierdzić czy w okrysie znajdują się dwa pojazdy i rozdziielić odpowiedno obrys
+    //ta cześć ma za zadanie na podstawie wartości pikseli stwierdzić czy w okrysie znajduje się więcej niż 1 pojazd i rozdziielić odpowiedno obrys
     std::vector<std::vector<cv::Point>> newContours;
     std::vector<bool> isMoreThanOneCar;
     int iii = 2;
