@@ -8,12 +8,18 @@ using namespace cv;
 #include <libgen.h>
 #include <unistd.h>
 
+enum class VideoMode {
+    Normal,
+    FrameByFrame
+};
+
 int main(void)
 {
 	Size winSize(15, 15), subPixWinSize(15, 15);
     //uzywane w mMinWindow
     //im mniejszy 3ci paramert tym wolniejsze działanie, a zmiana nie widoczna
     TermCriteria termcrit(TermCriteria::COUNT | TermCriteria::EPS, 30, 0.3);
+    VideoMode mode = VideoMode::Normal;
     Mat mFrame0, mFrame1, mFrame2, frame;
 	Mat* result1;
 	VideoCapture cap;
@@ -65,10 +71,23 @@ int main(void)
         //vectory
         imshow("Optical Flow2", mFrame0);
 
-        // sleep 1ms co klatkę
-        // bez tego nic się nie wyswietla
+        //p pauzuje i przechodzi so trybu klatka by klatka
+        //koejne p wraca do normalnego trybu
+        //dowolny klawisz prócz p przesuwa o 1 klatję do przodu w trybie klatka by klatka
         int key_pressed = waitKey(1);
-        if (key_pressed == 'q') break;
+        char key = static_cast<char>(key_pressed);
+        if (key == 'q') break;
+        if (mode == VideoMode::FrameByFrame)
+        {
+            key_pressed = waitKey(0);
+            key = static_cast<char>(key_pressed);
+        }
+        if (key == 'p') {
+            switch(mode){
+                case VideoMode::Normal : mode = VideoMode::FrameByFrame; std::cout << "switch to frame by frame mode" << std::endl; break;
+                case VideoMode::FrameByFrame : mode = VideoMode::Normal; std::cout << "switch to normal mode" << std::endl; break;
+            }
+        }
 
 	}
 
