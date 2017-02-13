@@ -58,7 +58,7 @@ int main ( int argc, char **argv )
     win1 = cv::Rect(0, 0, frame.cols, frame.rows); //x,y,width, height
 	mMinWindow mMinFrame0 = mMinWindow(win1, winSize, subPixWinSize, termcrit);
     //Do zbadania: 2 i 3 argument (history, varThreshold)
-    BGS bgsFrame0 = BGS(win1, 300, 20, win1.width /2 - 40, win1.width/2 + 40, 70);
+    BGS bgsFrame0 = BGS(win1, 300, 60, 200, 260, 300);
 
 	while (true)
 	{

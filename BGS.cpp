@@ -426,11 +426,45 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
     for (auto itc = vvpContours.begin(); itc != vvpContours.end(); ++itc, ++i)
     {
         cv::Scalar redColor(0, 0, 255);
+        int angle =1;
 
         //prostokat z pojazdem
         cv::Rect r0 = cv::boundingRect(cv::Mat(*itc));
-        Point3d dimensions =  construct_box(r0,1,*itc,false);
-        cv::circle(mColorFrame, get_lowpoint(r0,1,*itc,false) , 5, cv::Scalar(0, 255, 255), -1, 8, 0);
+        Point2f temp = Point2f((r0.br() + r0.tl()) / 2);
+        double a = -0.5;
+        //dla danego punktu x, y znajdujemy b rownaniem b = y - ax
+        // znajdujemy b srodka
+        double h0 = temp.y - angle * temp.x;
+        //proste górna i dolna zadane są równaniamy y = ax + h0 + hg oraz y = ax + h0 + hd
+        //wyznaczamy początkowe, maksymalnie złe wartości
+        double hg = 0.75 * abs(angle) * r0.height;
+        double hd = -0.75 * abs(angle) * r0.height;
+        //magiczny numerek 0.75 to półtora połowy rozmiaru pudełka
+        //w sumie nie można by wystartować od zera? Do sprawdzenia
+
+        //po zbiorach punktów składających się na kontur
+        for (auto itc2 = itc->begin(); itc2 != itc->end(); ++itc2)
+        {
+            //rysowanie punktów konturów for debug purposes
+            if (isMoreThanOneCar.at(i) == true)
+            {
+                circle(mColorFrame, *itc2, 5, Scalar(255, 0, 255), -1, 8, 0);
+
+            } else {
+                circle(mColorFrame, *itc2, 5, Scalar(0, 255, 255), -1, 8, 0);
+            }
+            // jeśli punkt konturu należy do r0 policz wysokość linii przez niego przechodzącej
+            if( r0.contains(*itc2))
+            {
+                double h_new = itc2->y - a * itc2->x;
+                h_new = h0 - h_new;
+                // poprawianie hg i hd
+                if( h_new < hg) hg = h_new;
+                if( h_new > hd) hd = h_new;
+            }
+        }
+        Point3d dimensions =  construct_box(r0,angle,*itc,false);
+        cv::circle(mColorFrame, get_lowpoint(r0,angle,*itc,false) , 5, cv::Scalar(0, 255, 255), -1, 8, 0);
 
         //patrzy czy prostokąt obejmujący pojaz jest odpowiednio wielki, i patrzy na proporcje długość szerokość
         if(r0.area() > 2600 && dimensions.x > dimensions.y * 1.2 && get_lowpoint(r0,1,*itc,false).x > p_pLine.first.x && get_lowpoint(r0,1,*itc,false).x < p_pLine.second.x && get_lowpoint(r0,1,*itc,false).y > p_pLine.first.y)
