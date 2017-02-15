@@ -162,7 +162,26 @@ cv::Point3d BGS::construct_box(cv::Rect r0, double angle, std::vector<cv::Point_
 
 }
 
-
+void BGS::splitContour(cv::Point const& p1, cv::Point const& p2, std::vector<cv::Point> const& originalContour, std::vector<std::vector<cv::Point>>& newContours)
+{
+    //p1 i p2 tworzą prostą, która dzieli contur na dwa mniejsze
+    double a = 1.0 * (p1.y - p2.y) / (p1.x - p2.x);
+    double b = p1.y - a * p1.x;
+    std::vector<cv::Point> newContour1;
+    std::vector<cv::Point> newContour2;
+    for (auto cPoint = originalContour.begin(); cPoint != originalContour.end(); ++cPoint)
+    {
+        double y = a * cPoint->x + b;
+        if(y > cPoint->y)
+        {
+            newContour1.push_back(*cPoint);
+        } else {
+            newContour2.push_back(*cPoint);
+        }
+    }
+    newContours.push_back(newContour1);
+    newContours.push_back(newContour2);
+}
 
 BGS::BGS(Rect rRectArg, int history, float varThreshold, int iDetectLineX1, int iDetectLineX2, int iDetectLineY)
 {
@@ -274,27 +293,34 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
                                   return lhs.y < rhs.y;
                           });
 
+        int angle = 135;
         using Length = int; //ilość nieczarnych piskelihue
         using AvColor = double; //średnie value colorów w pasku
-        int pixelVariation = 13;
+        int pixelVariation = 20;
         int avColorVariation = 50;
-        std::vector<AvColor> verticalAverage;
+//        std::vector<AvColor> verticalAverage;
         std::vector<std::pair<int,Length>> verticalNonBlack; //fist in position second in number of non black pixels
-        std::vector<std::pair<int,AvColor>> verticalAverageColorChange; //fist in position second in number of non black pixels
+//        std::vector<std::pair<int,AvColor>> verticalAverageColorChange; //fist in position second in number of non black pixels
         //srednie wartosci w pionowych paskach
         for ( auto x = extLeft.x; x != extRight.x; ++x)
         {
             Length l = 0;
             AvColor ac = 0;
+            double a = tan(angle * M_PI / 180.0);
+//            std::cout << "tan val: " << a << std::endl;
+            double b = -1 * extBot.y - x * a;
+//            std::cout << "b val: " << b << std::endl;
 //            std::cout << "bottom: " << extBot.y << ", top: " <<  extTop.y << std::endl;
-            for ( auto y = extTop.y; y != extBot.y; ++y)
+//            std::cout << "left: " << extLeft.x << ", right: " <<  extRight.x << std::endl;
+//            std::cout << "NEW LOOP COMING" << std::endl;
+            for ( auto y = extBot.y; (-y-b)/a > (double)extLeft.x && y > extTop.y  ; --y)
             {
 //                std::cout << "x: " << x << ", y: " << y << std::endl;
                 auto pix = channels[2].at<char>(x,y);
                 ac+=int(pix);
                 if (pix != 0) l++;
             }
-            verticalAverage.push_back(ac/(double)(extRight.x-extLeft.x));
+//            verticalAverage.push_back(ac/(double)(extRight.x-extLeft.x));
             if (verticalNonBlack.empty())
             {
                 verticalNonBlack.push_back(std::pair<int,Length>(x,l));
@@ -303,16 +329,16 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
             }
         }
         //jeśli średni kolor się zmienia to zakładamy, że mamy doczyninenia z nowym samochodem
-        for (int i =0; i < verticalAverage.size(); ++i)//auto vAvIt = verticalAverage.begin(); vAvIt != verticalAverage.end(); ++vAvIt)
-        {
-            auto l = verticalAverage.at(i);
-            if (verticalAverageColorChange.empty())
-            {
-                verticalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,verticalAverage.at(i)));
-            } else if (l+avColorVariation < verticalAverageColorChange.back().second || l-avColorVariation > verticalAverageColorChange.back().second) {
-                verticalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,verticalAverage.at(i)));
-            }
-        }
+//        for (int i =0; i < verticalAverage.size(); ++i)//auto vAvIt = verticalAverage.begin(); vAvIt != verticalAverage.end(); ++vAvIt)
+//        {
+//            auto l = verticalAverage.at(i);
+//            if (verticalAverageColorChange.empty())
+//            {
+//                verticalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,verticalAverage.at(i)));
+//            } else if (l+avColorVariation < verticalAverageColorChange.back().second || l-avColorVariation > verticalAverageColorChange.back().second) {
+//                verticalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,verticalAverage.at(i)));
+//            }
+//        }
 
 
 //        //srednie wartości w poziomych paskach
@@ -430,6 +456,7 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
 
         //prostokat z pojazdem
         cv::Rect r0 = cv::boundingRect(cv::Mat(*itc));
+        rectangle(mColorFrame, r0, Scalar(255,0,0));
         Point2f temp = Point2f((r0.br() + r0.tl()) / 2);
         double a = -0.5;
         //dla danego punktu x, y znajdujemy b rownaniem b = y - ax

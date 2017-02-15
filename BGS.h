@@ -26,6 +26,8 @@ public:
 
 private:
 	void Refactor(cv::Mat &mArg);
+    void splitContour(cv::Point const& p1, cv::Point const& p2, std::vector<cv::Point> const& originalContour, std::vector<std::vector<cv::Point>>& newContours);
+
 public:
     cv::Mat* drawSquare(cv::Mat const& mColorFrameArg);
     void printVehicleInfo(cv::Point3d coeffs);

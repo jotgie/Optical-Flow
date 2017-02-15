@@ -46,7 +46,7 @@ int main ( int argc, char **argv )
 
    // cap.open("file://" + path + "/banan_ffmpeg.avi");
     if(argc > 1) cap.open("file://" + path + "/" + argv[1]);
-    else cap.open("file://" + path + "/Braniewo1.mp4");
+    else cap.open("file://" + path + "/Braniewo4.mp4");
 
 	if (!cap.isOpened()) {
 		cout << "Can not open the video file" << endl;
