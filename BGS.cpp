@@ -191,7 +191,7 @@ BGS::BGS(Rect rRectArg, int history, float varThreshold, int iDetectLineX1, int 
     pMOG2->setNMixtures(5);
 //    pMOG2->setShadowThreshold(127);
     pMOG2->setVarMin(200);
-    pMOG2->setVarThresholdGen(0.1);
+    pMOG2->setVarThresholdGen(0.3);
     se1 = getStructuringElement(MORPH_RECT, Point(15, 15));
     se2 = getStructuringElement(MORPH_RECT, Point(2, 2));
     mMaskG = getStructuringElement(MORPH_RECT, Point(5, 5));
@@ -297,10 +297,8 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
         using Length = int; //ilość nieczarnych piskelihue
         using AvColor = double; //średnie value colorów w pasku
         int pixelVariation = 20;
-        int avColorVariation = 50;
-//        std::vector<AvColor> verticalAverage;
+//        int avColorVariation = 50;
         std::vector<std::pair<int,Length>> verticalNonBlack; //fist in position second in number of non black pixels
-//        std::vector<std::pair<int,AvColor>> verticalAverageColorChange; //fist in position second in number of non black pixels
         //srednie wartosci w pionowych paskach
         for ( auto x = extLeft.x; x != extRight.x; ++x)
         {
@@ -328,79 +326,43 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
                 verticalNonBlack.push_back(std::pair<int,Length>(x,l));
             }
         }
+
+
+//        //srednie wartości w ukośnych paskach
+//        std::vector<AvColor> horizontalAverage;
+//        std::vector<std::pair<int,Length>> horizontalNonBlack; //first is position second in number of non black pixels
+//        std::vector<std::pair<int,AvColor>> horizontalAverageColorChange; //fist in position second in number of non black pixels
+//        for ( auto y = extTop.y; y != extBot.y; ++y)
+//        {
+//            Length l = 0;
+//            AvColor ac = 0;
+//            for ( auto x = extLeft.x; x != extRight.x; ++x)
+//            {
+//                auto pix = channels[2].at<char>(x,y);
+//                ac+=pix;
+//                if (pix != 0) l++;
+//            }
+//            horizontalAverage.push_back(ac/(double)(extBot.y-extTop.y));
+//            if (horizontalNonBlack.empty())
+//            {
+//                horizontalNonBlack.push_back(std::pair<int,Length>(y,l));
+//            } else if (l+pixelVariation < horizontalNonBlack.back().second && l-pixelVariation > horizontalNonBlack.back().second) {
+//                horizontalNonBlack.push_back(std::pair<int,Length>(y,l));
+//            }
+//        }
         //jeśli średni kolor się zmienia to zakładamy, że mamy doczyninenia z nowym samochodem
-//        for (int i =0; i < verticalAverage.size(); ++i)//auto vAvIt = verticalAverage.begin(); vAvIt != verticalAverage.end(); ++vAvIt)
+//        for (int i =0; i < horizontalAverage.size(); ++i)//auto vAvIt = verticalAverage.begin(); vAvIt != verticalAverage.end(); ++vAvIt)
 //        {
-//            auto l = verticalAverage.at(i);
-//            if (verticalAverageColorChange.empty())
+//            auto l = horizontalAverage.at(i);
+//            if (horizontalAverageColorChange.empty())
 //            {
-//                verticalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,verticalAverage.at(i)));
-//            } else if (l+avColorVariation < verticalAverageColorChange.back().second || l-avColorVariation > verticalAverageColorChange.back().second) {
-//                verticalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,verticalAverage.at(i)));
+//                horizontalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,horizontalAverage.at(i)));
+//            } else if (l+avColorVariation < horizontalAverageColorChange.back().second || l-avColorVariation > horizontalAverageColorChange.back().second) {
+//                horizontalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,horizontalAverage.at(i)));
 //            }
 //        }
 
-
-//        //srednie wartości w poziomych paskach
-        std::vector<AvColor> horizontalAverage;
-        std::vector<std::pair<int,Length>> horizontalNonBlack; //first is position second in number of non black pixels
-        std::vector<std::pair<int,AvColor>> horizontalAverageColorChange; //fist in position second in number of non black pixels
-        for ( auto y = extTop.y; y != extBot.y; ++y)
-        {
-            Length l = 0;
-            AvColor ac = 0;
-            for ( auto x = extLeft.x; x != extRight.x; ++x)
-            {
-                auto pix = channels[2].at<char>(x,y);
-                ac+=pix;
-                if (pix != 0) l++;
-            }
-            horizontalAverage.push_back(ac/(double)(extBot.y-extTop.y));
-            if (horizontalNonBlack.empty())
-            {
-                horizontalNonBlack.push_back(std::pair<int,Length>(y,l));
-            } else if (l+pixelVariation < horizontalNonBlack.back().second && l-pixelVariation > horizontalNonBlack.back().second) {
-                horizontalNonBlack.push_back(std::pair<int,Length>(y,l));
-            }
-        }
-        //jeśli średni kolor się zmienia to zakładamy, że mamy doczyninenia z nowym samochodem
-        for (int i =0; i < horizontalAverage.size(); ++i)//auto vAvIt = verticalAverage.begin(); vAvIt != verticalAverage.end(); ++vAvIt)
-        {
-            auto l = horizontalAverage.at(i);
-            if (horizontalAverageColorChange.empty())
-            {
-                horizontalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,horizontalAverage.at(i)));
-            } else if (l+avColorVariation < horizontalAverageColorChange.back().second || l-avColorVariation > horizontalAverageColorChange.back().second) {
-                horizontalAverageColorChange.push_back(std::pair<int,Length>(extLeft.x + i,horizontalAverage.at(i)));
-            }
-        }
-
-
-
-//        std::cout << "verticalNonBlack lenght: " << verticalNonBlack.size() << std::endl;
-//        std::cout << "horizontalNonBlack lenght: " << horizontalNonBlack.size() << std::endl;
-//        std::cout << "verticalAverageColorChange lenght: " << verticalAverageColorChange.size() << std::endl;
-//        std::cout << "horizontalAverageColorChange lenght: " << horizontalAverageColorChange.size() << std::endl;
-//        if (horizontalAverageColorChange.size() > 4)
-//        {
-//            cv::Rect contourBox = cv::boundingRect(cv::Mat(*sigleContureVectorIt));
-//            for (auto changePointIt = horizontalAverageColorChange.begin(); changePointIt != horizontalAverageColorChange.end(); ++changePointIt)
-//            {
-//                cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
-//                circle(mColorFrame,  cv::Point(middle.x, changePointIt->second), 5, Scalar(0, 0, 255), -1, 8, 0);
-//            }
-//        }
-//        if (verticalAverageColorChange.size() > 4)
-//        {
-//            cv::Rect contourBox = cv::boundingRect(cv::Mat(*sigleContureVectorIt));
-//            for (auto changePointIt = verticalAverageColorChange.begin(); changePointIt != verticalAverageColorChange.end(); ++changePointIt)
-//            {
-//                cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
-//                circle(mColorFrame,  cv::Point(changePointIt->second, middle.y), 5, Scalar(0, 0, 255), -1, 8, 0);
-//            }
-//        }
-
-        if (verticalNonBlack.size() <= 2 && horizontalNonBlack.size() <= 2)
+        if (false /*verticalNonBlack.size() <= 2 *//*&& horizontalNonBlack.size() <= 2*/)
         {
             //only one car in blob. We can continue to next contour
             newContours.push_back(*sigleContureVectorIt);
@@ -409,14 +371,22 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
         }
         else
         {
-            newContours.push_back(*sigleContureVectorIt);
             //for dbg
-            isMoreThanOneCar.push_back(true);
+            bool generateNewContour = true;
+            circle(mColorFrame,  cv::Point(0,0), 5, Scalar(0,0,255), -1, 8, 0);
+            circle(mColorFrame,  cv::Point(200,200), 5, Scalar(0,0,255), -1, 8, 0);
             cv::Rect contourBox = cv::boundingRect(cv::Mat(*sigleContureVectorIt));
+            if (false == generateNewContour) {
+                newContours.push_back(*sigleContureVectorIt);
+                isMoreThanOneCar.push_back(false);
+            } else {
+                isMoreThanOneCar.push_back(true);
+                isMoreThanOneCar.push_back(false);
+                splitContour(cv::Point(0,0),cv::Point(200,200),*sigleContureVectorIt,newContours);
+            }
+
             if(verticalNonBlack.size() > 1)
             {
-//                cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
-//                cv::line(mColorFrame, cv::Point(verticalNonBlack.front().first, middle.y), cv::Point(verticalNonBlack.back().first, middle.y),  cv::Scalar(255,255,0), 2);
                 for (auto nonBlackPointIt = verticalNonBlack.begin(); nonBlackPointIt != verticalNonBlack.end(); ++nonBlackPointIt)
                 {
                     cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
@@ -424,16 +394,14 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
                 }
             }
 
-            if(horizontalNonBlack.size() > 1)
-            {
-//                cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
-//                cv::line(mColorFrame, cv::Point(middle.x, horizontalNonBlack.front().first), cv::Point(middle.x, horizontalNonBlack.back().first),  cv::Scalar(255,255, 0), 2);
-                for (auto nonBlackPointIt = verticalNonBlack.begin(); nonBlackPointIt != verticalNonBlack.end(); ++nonBlackPointIt)
-                {
-                    cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
-                    circle(mColorFrame,  cv::Point(middle.x,nonBlackPointIt->first), 5, Scalar(255,0,255), -1, 8, 0);
-                }
-            }
+//            if(horizontalNonBlack.size() > 1)
+//            {
+//                for (auto nonBlackPointIt = verticalNonBlack.begin(); nonBlackPointIt != verticalNonBlack.end(); ++nonBlackPointIt)
+//                {
+//                    cv::Point middle((contourBox.br() + contourBox.tl()) / 2);
+//                    circle(mColorFrame,  cv::Point(middle.x,nonBlackPointIt->first), 5, Scalar(255,0,255), -1, 8, 0);
+//                }
+//            }
             //więcej niż jeden pojazd. Trzeba podzielić kontur na dwa
             //1. Samochodów jest tyle ile wynosi długość wetora nieczarnych
             //2. Dla obszarów przejściowych znajduje my 2 (samochy obok siebie lub bezpośrednoi za sobą)
@@ -449,12 +417,13 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
 
     //dla wszystkich kanturów pojazdów
     int i=0;
-    for (auto itc = vvpContours.begin(); itc != vvpContours.end(); ++itc, ++i)
+    for (auto itc = newContours.begin(); itc != newContours.end(); ++itc, ++i)
     {
         cv::Scalar redColor(0, 0, 255);
         int angle =1;
 
         //prostokat z pojazdem
+//        cv::RotatedRect r0 = cv::minAreaRect(*itc);
         cv::Rect r0 = cv::boundingRect(cv::Mat(*itc));
         rectangle(mColorFrame, r0, Scalar(255,0,0));
         Point2f temp = Point2f((r0.br() + r0.tl()) / 2);
@@ -494,7 +463,7 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
         cv::circle(mColorFrame, get_lowpoint(r0,angle,*itc,false) , 5, cv::Scalar(0, 255, 255), -1, 8, 0);
 
         //patrzy czy prostokąt obejmujący pojaz jest odpowiednio wielki, i patrzy na proporcje długość szerokość
-        if(r0.area() > 2600 && dimensions.x > dimensions.y * 1.2 && get_lowpoint(r0,1,*itc,false).x > p_pLine.first.x && get_lowpoint(r0,1,*itc,false).x < p_pLine.second.x && get_lowpoint(r0,1,*itc,false).y > p_pLine.first.y)
+        if(r0.area() > 2600 && dimensions.x > dimensions.y * 1.1 && get_lowpoint(r0,1,*itc,false).x > p_pLine.first.x && get_lowpoint(r0,1,*itc,false).x < p_pLine.second.x && get_lowpoint(r0,1,*itc,false).y > p_pLine.first.y)
         {
             construct_box(r0,1,*itc,true);
 
@@ -538,9 +507,6 @@ cv::Mat* BGS::drawSquare(cv::Mat const& mColorFrameArg)
                                 vehicle_ids.push_back(tempr.getID());// dodaj pojazd
                                 mColorFrame1(r0).copyTo(tempmat);
                                 imshow("vechicles", tempmat);
-
-                                //zapisz obraz pojazdu
-                                vector<int> compression_params;
 
                                 tempr.addSnapshot(tempmat,dimensions);
 
